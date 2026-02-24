@@ -25,3 +25,21 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log("Servidor en puerto", PORT);
 });
+
+const Categoria = mongoose.model(
+  "Categoria",
+  new mongoose.Schema({
+    nombre: String,
+    descripcion: String,
+  }),
+  "categorias"
+);
+
+app.get("/api/categorias", async (req, res) => {
+  try {
+    const lista = await Categoria.find().sort({ nombre: 1 });
+    res.json(lista);
+  } catch (err) {
+    res.status(500).json({ ok: false, msg: err.message });
+  }
+});
