@@ -4,28 +4,31 @@ require("dotenv").config();
 
 const app = express();
 
+// --- Debug mínimo para Render ---
+console.log("1) Iniciando server.js");
+console.log("2) MONGO_URI existe:", !!process.env.MONGO_URI);
+
+// --- Conexión Mongo ---
 mongoose
   .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 8000 })
   .then(() => console.log("Conectado a MongoDB Atlas"))
   .catch((err) => console.log("Error MongoDB:", err.message));
 
+// --- Rutas ---
+app.get("/", (req, res) => {
+  res.send("PAFINAL API OK");
+});
 
+// Punto 2 (GET con parámetro)
 app.get("/api/servicio", (req, res) => {
-  const dato = req.query.dato; // <-- parámetro GET
+  const dato = req.query.dato;
   if (!dato) {
     return res.status(400).json({ ok: false, msg: "Falta parametro ?dato=" });
   }
   return res.json({ ok: true, recibido: dato });
 });
 
-const PORT = process.env.PORT || 3001;
-app.get("/", (req, res) => {
-  res.send("PAFINAL API OK");
-});
-app.listen(PORT, () => {
-  console.log("Servidor en puerto", PORT);
-});
-
+// Modelo + endpoint maestro (Punto 3)
 const Categoria = mongoose.model(
   "Categoria",
   new mongoose.Schema({
@@ -43,3 +46,7 @@ app.get("/api/categorias", async (req, res) => {
     res.status(500).json({ ok: false, msg: err.message });
   }
 });
+
+// --- Server ---
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log("Servidor en puerto", PORT));
