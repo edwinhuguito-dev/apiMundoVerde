@@ -4,22 +4,22 @@ require("dotenv").config();
 
 const app = express();
 
-// --- Debug mínimo para Render ---
+
 console.log("1) Iniciando server.js");
 console.log("2) MONGO_URI existe:", !!process.env.MONGO_URI);
 
-// --- Conexión Mongo ---
+
 mongoose
   .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 8000 })
-  .then(() => console.log("✅ Conectado a MongoDB Atlas"))
-  .catch((err) => console.log("❌ Error MongoDB:", err.message));
+  .then(() => console.log("Conectado a MongoDB Atlas"))
+  .catch((err) => console.log("Error MongoDB:", err.message));
 
-// --- Esperar a Mongo antes de atender /api ---
+
 let mongoReady = false;
 
 mongoose.connection.on("connected", () => {
   mongoReady = true;
-  console.log("✅ Mongo listo");
+  console.log("Mongo listo");
 });
 
 app.use((req, res, next) => {
@@ -29,12 +29,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// --- Rutas ---
+
 app.get("/", (req, res) => {
   res.send("PAFINAL API OK");
 });
 
-// Punto 2 (GET con parámetro)
+
 app.get("/api/servicio", (req, res) => {
   const dato = req.query.dato;
   if (!dato) {
@@ -43,7 +43,7 @@ app.get("/api/servicio", (req, res) => {
   return res.json({ ok: true, recibido: dato });
 });
 
-// Modelo + endpoint maestro (Punto 3)
+
 const Categoria = mongoose.model(
   "Categoria",
   new mongoose.Schema({
@@ -62,6 +62,32 @@ app.get("/api/categorias", async (req, res) => {
   }
 });
 
-// --- Server ---
+
+
+const Producto = mongoose.model(
+  "Producto",
+  new mongoose.Schema({
+    nombre: String,
+    precio: Number,
+    stock: Number,
+    categoriaId: String,
+  }),
+  "productos"
+);
+
+
+app.get("/api/productos", async (req, res) => {
+  try {
+    const { categoriaId } = req.query;
+    if (!categoriaId) {
+      return res.status(400).json({ ok: false, msg: "Falta parametro ?categoriaId=" });
+    }
+    const lista = await Producto.find({ categoriaId }).sort({ nombre: 1 });
+    res.json(lista);
+  } catch (err) {
+    res.status(500).json({ ok: false, msg: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log("Servidor en puerto", PORT));
