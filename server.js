@@ -11,8 +11,23 @@ console.log("2) MONGO_URI existe:", !!process.env.MONGO_URI);
 // --- Conexión Mongo ---
 mongoose
   .connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 8000 })
-  .then(() => console.log("Conectado a MongoDB Atlas"))
-  .catch((err) => console.log("Error MongoDB:", err.message));
+  .then(() => console.log("✅ Conectado a MongoDB Atlas"))
+  .catch((err) => console.log("❌ Error MongoDB:", err.message));
+
+// --- Esperar a Mongo antes de atender /api ---
+let mongoReady = false;
+
+mongoose.connection.on("connected", () => {
+  mongoReady = true;
+  console.log("✅ Mongo listo");
+});
+
+app.use((req, res, next) => {
+  if (!mongoReady && req.path.startsWith("/api/")) {
+    return res.status(503).json({ ok: false, msg: "Mongo aún no está listo, reintenta" });
+  }
+  next();
+});
 
 // --- Rutas ---
 app.get("/", (req, res) => {
